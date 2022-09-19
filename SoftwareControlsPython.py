@@ -30,6 +30,8 @@ screwdriver = 11
 claw = 28
 swivel = 12
 
+defaultPMV = 128
+
 #Sets each pin connection to servo motor
 motorList = [leftW1, leftW2, leftW3, rightW1, rightW2, rightW3, ledRed, ledBlue, ledGreen, upperExt, lowerEXT, hoist, screwdriver, claw, swivel]
 for pin in motorList:
