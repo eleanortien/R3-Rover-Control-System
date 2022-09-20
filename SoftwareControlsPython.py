@@ -30,8 +30,6 @@ screwdriver = 11
 claw = 28
 swivel = 12
 
-defaultPMV = 128
-
 #Sets each pin connection to servo motor
 motorList = [leftW1, leftW2, leftW3, rightW1, rightW2, rightW3, ledRed, ledBlue, ledGreen, upperExt, lowerEXT, hoist, screwdriver, claw, swivel]
 for pin in motorList:
@@ -44,18 +42,22 @@ host.bind(compIp, serverPort) #Talk to Arduino
 data, addr = host.recvfrom(1024) 
 data.close()
 
-def drive(lw1, rw1, lw2, rw2, lw3, rw3):
+def drive(lw1 = 128, rw1 = 128, lw2 = 128, rw2 = 128, lw3 = 128, rw3 = 128):
     host.sendto(str.encode("DriveCommand_" + str(lw1) + "_" + str(rw1) + "_" + str(lw2) + "_" + str(rw2) + "_" + str(lw3) + "_" + str(rw3)), addr)
 #Keyboard Inputs
 #Initializing controller
 pygame.joystick.init()
-for i in range(pygame.joystick.getcount()):
-    joysticks = [pygame.joystick.Joystick(i)]
+joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
 
-for event in pygame.event.get():
-    if event.type == pygame.JOYAXISMOTION:
-        if event.axis < 2:
-            drive()
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.JOYAXISMOTION:
+            if event.axis < 2:
+                #Check left joystick controls 
+                if joysticks[0].get_axis(0):
+                    print("left joystick")
+                    drive()
+        
 
 
 
