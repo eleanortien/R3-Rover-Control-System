@@ -11,6 +11,11 @@ serverPort = 8090
 compIp = '169.254.15.133'
 echoNum = 1024
 
+#Controller Values
+leftStick = 0
+rightStick = 1
+threshhold = 0.1
+
 #Drive Pin Numbers
 leftW1 = 11
 leftW2 = 12
@@ -42,21 +47,46 @@ host.bind(compIp, serverPort) #Talk to Arduino
 data, addr = host.recvfrom(1024) 
 data.close()
 
-def drive(lw1 = 128, rw1 = 128, lw2 = 128, rw2 = 128, lw3 = 128, rw3 = 128):
-    host.sendto(str.encode("DriveCommand_" + str(lw1) + "_" + str(rw1) + "_" + str(lw2) + "_" + str(rw2) + "_" + str(lw3) + "_" + str(rw3)), addr)
+def drive(lw1 = 128, rw1 = 128, lw2 = 128, rw2 = 128, lw3 = 128, rw3 = 128):    
+    l1, l2, l3, r1, r2, r3 = lw1, lw2, lw3, rw1, rw2, rw3 
+    wheels = [l1, l2, l3, r1, r2, r3] 
+    #Increment the motor turn??
+    for i in range(128): #Increment motor starting from default (half length of 255)
+        for wheel in range(len(wheels)):
+            if wheels[wheel] < 128:
+                wheels[wheel] -= 1    
+            elif wheels[wheel] > 128:
+                wheels[wheel] += 1
+        host.sendto(str.encode("DriveCommand_" + str(lw1) + "_" + str(rw1) + "_" + str(lw2) + "_" + str(rw2) + "_" + str(lw3) + "_" + str(rw3)), addr)
+
 #Keyboard Inputs
 #Initializing controller
 pygame.joystick.init()
 joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
 
+#Drive Loop
 while True:
     for event in pygame.event.get():
         if event.type == pygame.JOYAXISMOTION:
             if event.axis < 2:
-                #Check left joystick controls 
-                if joysticks[0].get_axis(0):
-                    print("left joystick")
-                    drive()
+                #Get controllers set up
+                leftMotion = joysticks[0].get_axis(leftStick)
+                rightMotion = joysticks[0].get_axis(rightStick)
+
+                #Dead Zone
+                if abs(event.value) < threshhold:
+                    drive()                    
+
+                #Check which stick on the controller is movin
+                elif abs(leftMotion) > threshhold and abs(rightMotion) > threshhold:
+                    #Check forward or backwards
+                    # Format like this??: drive(lw1 = lw2 = lw3 = 255 * leftMotion.value, rw1 = rw2 = rw3 = 255 *rightMotion.value)
+                    drive(255 * leftMotion.value, 255 * leftMotion.value, 255 * leftMotion.value, 255 * rightMotion.value, 255 *rightMotion.value, 255 * rightMotion.value ) # Set event value of each axis to multiply direction
+                elif abs(leftMotion) > threshhold:
+                    drive(lw1 = 255 * leftMotion.value, lw2 = 255 * leftMotion.value, lw3 = 255 * leftMotion.value, rw1 = 0, rw2 = 0, rw3 = 0) 
+                elif abs(rightMotion) > threshhold:
+                    drive(rw1 = 255 * rightMotion.value, rw2 = 255 * rightMotion.value, rw3 = 255 * rightMotion.value, lw1 = 0, lw2 = 0, lw3 = 0) 
+               
         
 
 
