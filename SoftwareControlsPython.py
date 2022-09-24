@@ -77,13 +77,15 @@ while True:
                 if abs(event.value) < threshhold:
                     drive()                    
 
-                #Check which stick on the controller is movin
+                #Check which stick on the controller moves
+                #Simultaneous Motion
                 elif abs(leftMotion) > threshhold and abs(rightMotion) > threshhold:
-                    #Check forward or backwards
                     # Format like this??: drive(lw1 = lw2 = lw3 = 255 * leftMotion.value, rw1 = rw2 = rw3 = 255 *rightMotion.value)
                     drive(255 * leftMotion.value, 255 * leftMotion.value, 255 * leftMotion.value, 255 * rightMotion.value, 255 *rightMotion.value, 255 * rightMotion.value ) # Set event value of each axis to multiply direction
+                #Turn left
                 elif abs(leftMotion) > threshhold:
                     drive(lw1 = 255 * leftMotion.value, lw2 = 255 * leftMotion.value, lw3 = 255 * leftMotion.value, rw1 = 0, rw2 = 0, rw3 = 0) 
+                #Turn right
                 elif abs(rightMotion) > threshhold:
                     drive(rw1 = 255 * rightMotion.value, rw2 = 255 * rightMotion.value, rw3 = 255 * rightMotion.value, lw1 = 0, lw2 = 0, lw3 = 0) 
                
