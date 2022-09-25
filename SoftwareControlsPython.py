@@ -48,14 +48,15 @@ data, addr = host.recvfrom(1024)
 data.close()
 
 def drive(lw1 = 128, rw1 = 128, lw2 = 128, rw2 = 128, lw3 = 128, rw3 = 128):    
-    l1, l2, l3, r1, r2, r3 = lw1, lw2, lw3, rw1, rw2, rw3 
+    l1, l2, l3, r1, r2, r3 = 128
+    wheelsFinal = [lw1, lw2, lw3, rw1, rw2, rw3]
     wheels = [l1, l2, l3, r1, r2, r3] 
     #Increment the motor turn??
     for i in range(128): #Increment motor starting from default (half length of 255)
-        for wheel in range(len(wheels)):
-            if wheels[wheel] < 128:
+        for wheel in range(len(wheelsFinal)):
+            if wheelsFinal[wheel] < 128:
                 wheels[wheel] -= 1    
-            elif wheels[wheel] > 128:
+            elif wheelsFinal[wheel] > 128:
                 wheels[wheel] += 1
         host.sendto(str.encode("DriveCommand_" + str(lw1) + "_" + str(rw1) + "_" + str(lw2) + "_" + str(rw2) + "_" + str(lw3) + "_" + str(rw3)), addr)
 
