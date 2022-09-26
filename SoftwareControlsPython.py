@@ -19,6 +19,8 @@ class main:
         #Controller Values
         leftStick = 1
         rightStick = 3 #or 1 and 3
+        rightTrigger = 4
+        leftTrigger = 5
         threshhold = 0.1
         #Pin unneeded in Python 
         #Drive Pin Numbers
@@ -41,6 +43,9 @@ class main:
         swivel = 12
 
         packet = data()
+        leftSideSpeed = 128
+        rightSideSpeed = 128
+        
 
         packet.pastmsg = ""
         #HOPEFULLY allows Python to communicate with Arduino via sockets
@@ -54,6 +59,7 @@ class main:
             l1, l2, l3, r1, r2, r3 = 128
             wheelsFinal = [lw1, lw2, lw3, rw1, rw2, rw3]
             wheels = [l1, l2, l3, r1, r2, r3] 
+            
             #Increment the motor turn??
             for i in range(128): #Increment motor starting from default (half length of 255)
                 for wheel in range(len(wheelsFinal)):
@@ -61,7 +67,13 @@ class main:
                         wheels[wheel] -= 1    
                     elif wheelsFinal[wheel] > 128:
                         wheels[wheel] += 1
-            
+                    
+                    #Check within boundaries
+                    if wheels[wheel] > 255:
+                        wheels[wheel] = 255
+                    elif wheels[wheel] < 0:
+                        wheels[wheel] = 0
+                
                 packet.msg= "DriveCommand_" + str(lw1) + "_" + str(rw1) + "_" + str(lw2) + "_" + str(rw2) + "_" + str(lw3) + "_" + str(rw3)
 
                 if packet.pastmsg != packet.msg:
@@ -75,30 +87,55 @@ class main:
         pygame.joystick.init()
         joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
 
-        #Drive Loop
+
         while True:
             for event in pygame.event.get():
+                #Drive controls
                 if event.type == pygame.JOYAXISMOTION:
                     if event.axis < 2:
-                        #Get controllers set up
+                        #Get controllers' input
                         leftMotion = joysticks[0].get_axis(leftStick)
                         rightMotion = joysticks[0].get_axis(rightStick)
+                        rTriggerMotion = joysticks[0].get_axis(rightTrigger)
+                        lTriggerMotion = joysticks[0].get_axis(leftTrigger)
 
                         #Dead Zone
                         if abs(event.value) < threshhold:
-                            drive()                    
+                            drive()            
+                            continue       
 
                         #Check which stick on the controller moves
                         #Simultaneous Motion
                         elif abs(leftMotion) > threshhold and abs(rightMotion) > threshhold:
-                            # Format like this??: drive(lw1 = lw2 = lw3 = 255 * leftMotion.value, rw1 = rw2 = rw3 = 255 *rightMotion.value)
-                            drive(170 * leftMotion, 170 * leftMotion, 170 * leftMotion, 170 * rightMotion, 170 * rightMotion, 170 * rightMotion) # Set event value of each axis to multiply direction
+                            leftSideSpeed = leftMotion * 170
+                            rightSideSpeed = rightMotion * 170
+                            #drive(170 * leftMotion, 170 * leftMotion, 170 * leftMotion, 170 * rightMotion, 170 * rightMotion, 170 * rightMotion) # Set event value of each axis to multiply direction
                         #Turn left
                         elif abs(leftMotion) > threshhold:
-                            drive(lw1 = 170 * leftMotion, lw2 = 170 * leftMotion, lw3 = 255 * leftMotion, rw1 = 70, rw2 = 70, rw3 = 70) 
+                            leftSideSpeed = leftMotion * 170
+                            rightSideSpeed = rightMotion * 70
+                            #drive(lw1 = 170 * leftMotion, lw2 = 170 * leftMotion, lw3 = 170 * leftMotion, rw1 = 70, rw2 = 70, rw3 = 70) 
                         #Turn right
                         elif abs(rightMotion) > threshhold:
+                            leftSideSpeed = leftMotion * 70
+                            rightSideSpeed = rightMotion * 170
                             drive(rw1 = 170 * rightMotion, rw2 = 170 * rightMotion, rw3 = 170 * rightMotion, lw1 = 70, lw2 = 70, lw3 = 70) 
+                        
+                        
+                        #Speed Increase
+                        elif abs(rTriggerMotion) > threshhold:
+                            leftSideSpeed += 70
+                            rightSideSpeed += 70
+                        
+                        #Speed Decrease
+                        elif abs(lTriggerMotion) > threshhold:
+                            leftSideSpeed -= 70
+                            rightSideSpeed -=70
+                        
+                        drive(leftSideSpeed, leftSideSpeed, leftSideSpeed, rightSideSpeed, rightSideSpeed, rightSideSpeed)
+                            
+            
+                #Arm Control
                     
                 
 if __name__ == "__main__":
