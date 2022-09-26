@@ -56,12 +56,9 @@ class main:
     
 
         def drive(lw1 = 128, rw1 = 128, lw2 = 128, rw2 = 128, lw3 = 128, rw3 = 128):    
-            l1, l2, l3, r1, r2, r3 = 128
-            wheelsFinal = [lw1, lw2, lw3, rw1, rw2, rw3]
-            wheels = [l1, l2, l3, r1, r2, r3] 
-            
+            wheels = [lw1, lw2, lw3, rw1, rw2, rw3]
          
-            for wheel in range(len(wheelsFinal)):
+            for wheel in range(len(wheels)):
                     #Check within boundaries
                 if wheels[wheel] > 255:
                     wheels[wheel] = 255
@@ -73,6 +70,9 @@ class main:
             if packet.pastmsg != packet.msg:
                 print(packet.msg)
             host.sendto(packet.msg.encode(), compIp, serverPort)
+        
+        def arm(upExt = 128, lowExt = 128, hoist = 150, screw = 128, claw = 128, swivel = 128):
+            up, low, h, sc, cl, sw = 128
 
 
         #Keyboard Inputs
@@ -156,7 +156,9 @@ class main:
                         if event.axis < 2:
                             hoistMotion = armJoystick.get_axis(leftStick)
                             swivelMotion = armJoystick.get_axis(rightStick)
-                            
+                        
+                        
+
 
             
                     
