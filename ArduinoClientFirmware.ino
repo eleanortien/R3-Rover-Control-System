@@ -1,6 +1,6 @@
 #include <Ethernet.h>
 #include <EthernetUdp.h>
-#define UDP_TX_PACKET_MAX_SIZE 36 //increase UDP size
+#define UDP_TX_PACKET_MAX_SIZE 34 //increase UDP size
 #include <SPI.h>
 #include <Servo.h>
 
