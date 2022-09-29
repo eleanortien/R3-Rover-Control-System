@@ -1,14 +1,21 @@
 #include <Ethernet.h>
 #include <EthernetUdp.h>
+#define UDP_TX_PACKET_MAX_SIZE 36 //increase UDP size
 #include <SPI.h>
 #include <Servo.h>
 
+class motor{
+  public:
+    Servo servo;
+    int pin;
+};
+
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEE };  //Assign a mac address
-IPAddress compIp(169, 254, 15, 133);                  //Find IP address (put in brackets) and assign IP address
+//IPAddress compIp(169, 254, 15, 133);                  //Find IP address (put in brackets) and assign IP address
 IPAddress ardIp(192, 168, 1, 243);
 
-unsigned int localPort = 8800;  //Assign port to talk over
-unsigned int pythonPort = 7000;
+unsigned int localPort = 8090;  //Assign port to talk over
+//unsigned int pythonPort = 7000;
 char packetBuffer[UDP_TX_PACKET_MAX_SIZE];  //Sent Data
 String dataReq;                             //String for data
 int packetSize;
@@ -16,10 +23,12 @@ EthernetUDP udp;  //Define UDP Object
 
 //Variable setup
 int lw1, lw2, lw3, rw1, rw2, rw3;
-int wheels[6] = {lw1, lw2, lw3, rw1, rw2, rw3}; 
+int wheels[6] = {lw1, rw1, lw2, rw2, lw3, rw3}; 
 
-Servo servoLW1, servoLW2, servoLW3, servoRW1, servoRW2, servoRW3, servoLEDR, servoLEDB, servoLEDG;
-Servo servoList [9]= {servoLW1, servoLW2, servoLW3, servoRW1, servoRW2, servoRW3, servoLEDR, servoLEDB, servoLEDG};
+Servo servoLW1, servoLW2, servoLW3, servoRW1, servoRW2, servoRW3;
+Servo servoList [6]= {servoLW1, servoRW1, servoLW2, servoRW2, servoLW3, servoRW3};
+motor motorL1, motorR1, motorL2, motorR2, motorL3, motorR3;
+motor motors [6] = {motorL1, motorR1, motorL2, motorR2, motorL3, motorR3};
 
 //Drive Pin Numbers
 int leftW1 = 11;
@@ -33,21 +42,43 @@ int ledBlue = 34;
 int ledGreen = 35;
 
 
-int pinList [9]={leftW1, leftW2, leftW3, rightW1, rightW2, rightW3, ledRed, ledBlue, ledGreen};
-int motorSize = 9;
+int pinList [9]={leftW1, rightW1, leftW2, rightW2, leftW3, rightW3, ledRed, ledBlue, ledGreen};
+int motorSize = 6;
+
+const long timeInterval = 2500;
+unsigned long previousMillis = 0;
+bool lightOn = false;
 
 
+void ledOn (int ledOn, int led2, int led3, bool on)
+{
+  digitalWrite(led2, LOW);
+  digitalWrite(led3, LOW);
+  if (!on)
+  {
+    digitalWrite(ledOn, HIGH);
+  }
+  else
+  {
+    digitalWrite(ledOn, LOW);    
+  }
 
+}
 
 void setup() {
-  Serial.begin(115200);        //Turn on Serial Port
+  //Serial.begin(115200);        //Turn on Serial Port
   Ethernet.begin(mac, ardIp);  //Initialise Ethernet
   udp.begin(localPort);        //Start udp
   delay(1500);
-  for (int pin = 0; pin < motorSize; pin++)
+  for (int motor = 0; motor < motorSize; motor++)
   {
-    servoList[pin].attach(pinList[pin]);
+    motors[motor].servo = servoList[motor];
+    motors[motor].pin = pinList[motor];
+    motors[motor].servo.attach(motors[motor].pin);
   }
+  //Connection light? Indicates rover is on
+  ledOn(ledBlue, ledGreen, ledRed, false);
+
 }
 
 void loop() {
@@ -55,17 +86,56 @@ void loop() {
   if (packetSize > 0) {
     udp.read(packetBuffer, UDP_TX_PACKET_MAX_SIZE);
     String data(packetBuffer);  //Convert data to string
-    if (data.substring(0, data.indexOf("_")) == "DRIVECOMMAND")
+    
+    if (data.substring(0, data.indexOf("_")) == "DriveCommand")
     {
-      data = data[0, data.indexOf("_") + 1];
-      for (int i = 0; i < 6; i++)
+      data = data.substring(data.indexOf("_") + 1 );
+      for (int i = 0; i < motorSize; i++)
       {
         int wheel = int(data[0, data.indexOf("_")]);
         wheels[i] = wheel;
-        servoList[i].write(int(wheels[i]) + (1500 - 128));
+        servoList[i].writeMicroseconds((int) (int(wheels[i])/255 * 1000) + 1000);
+        data = data.substring(data.indexOf("_") + 1 );
 
       }
 
+    }
+
+    //LED Control
+    unsigned long currentMillis = millis();
+
+    if (int(lw1) < 128 && int(rw1) < 128)
+    {
+      if (currentMillis - previousMillis >= timeInterval)
+      {
+        //Red lights for reverse
+        ledOn(ledRed, ledGreen, ledBlue, lightOn);
+        previousMillis = currentMillis;
+        lightOn = !lightOn;
+      }
+    }
+    else if (int(lw1) == 128 && int(rw1) == 128)
+    {
+      //Blue lights for standby
+      if (currentMillis - previousMillis >= timeInterval)
+      {
+        //Red lights for reverse
+        ledOn(ledBlue, ledGreen, ledRed, lightOn);
+        previousMillis = currentMillis;
+        lightOn = !lightOn;
+      }
+      
+    }
+    else
+    {
+      //Green lights for driving
+      if (currentMillis - previousMillis >= timeInterval)
+      {
+        //Red lights for reverse
+        ledOn(ledGreen, ledRed, ledBlue, lightOn);
+        previousMillis = currentMillis;
+        lightOn = !lightOn;
+      }
     }
     
 
@@ -87,29 +157,3 @@ void loop() {
 
 
 
-/*#include <Wifi.h>
-
-const char* netID = "networkName";
-const char* password = "networkPass";
-const uint16_t serverport = 8090;
-const char * host = "192.168.1.83"; 
-int timedl = 500;
-
-void setup() {
-  Serial.begin(115200); //Use bps of Arduino here
-
-  WiFi.begin(netID, password); //Open serial connection
-  while (WiFi.status() != WL_CONNECTED){ //While not connected
-    delay (timedl);
-    Serial.println("...");
-  }
-
-Serial.print("WiFi connected with IP: ");
-Serial.println(WiFi.localIP());
-}
-
-void loop() {
-  // put your main code here, to run repeatedly:
-
-}
-*/
