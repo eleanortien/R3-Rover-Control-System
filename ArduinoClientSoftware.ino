@@ -70,7 +70,7 @@ void loop() {
     if (data.substring(0, data.indexOf("_")) == "DriveCommand")
     {
       data = data.substring(data.indexOf("_") + 1 );
-      for (int i = 0; i < 6; i++)
+      for (int i = 0; i < motorSize; i++)
       {
         int wheel = int(data[0, data.indexOf("_")]);
         wheels[i] = wheel;
