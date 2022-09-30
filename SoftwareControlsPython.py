@@ -9,9 +9,6 @@ class main:
         import pygame
 
         #Variable Setup
-        ardPort = "com3" #Write com connected to Arduino here
-        #board = Arduino(ardPort)
-        delay = 0.015
         serverPort = 8090
         compIp = '192.168.1.11' #Make ip 192... (in document)
         echoNum = 1024
@@ -27,26 +24,6 @@ class main:
         sqrButton = 3
         circButton = 4
 
-        #Pin unneeded in Python 
-        #Drive Pin Numbers
-        leftW1 = 11
-        leftW2 = 12
-        leftW3 = 24
-        rightW1 = 25
-        rightW2 = 28
-        rightW3 = 29
-        ledRed = 33
-        ledBlue = 34
-        ledGreen = 35
-
-        #Arm Pin Numbers
-        upperExt = 24
-        lowerEXT= 29
-        hoist = 25
-        screwdriver = 11
-        claw = 28
-        swivel = 12
-
         
         screwMove = 128
         hoistMove = 150
@@ -59,7 +36,7 @@ class main:
 
         drivePacket = data()
         armPacket = data()
-        
+
         armPacket.pastmsg = ""
         drivePacket.pastmsg = ""
 
